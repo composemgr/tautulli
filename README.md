@@ -47,8 +47,8 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/config/tautulli` - Data storage
-- `./rootfs/data/tautulli` - Data storage
+- `./volumes/config/tautulli` - Data storage
+- `./volumes/data/tautulli` - Data storage
 
 ## 🔍 Logging
 
