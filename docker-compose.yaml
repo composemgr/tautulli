@@ -21,8 +21,8 @@ services:
       PUID: ${SERVICE_USER:-1000}
       PGID: ${SERVICE_GROUP:-1000}
     volumes:
-      - ./rootfs/config/tautulli:/config
-      - ./rootfs/data/tautulli:/data
+      - ./volumes/config/tautulli:/config
+      - ./volumes/data/tautulli:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8181"]
       interval: 30s
