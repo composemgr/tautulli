@@ -1,5 +1,6 @@
 # nginx proxy address - http://172.17.0.1:8181
 
+name: tautulli
 x-logging: &default-logging
   driver: json-file
   options:
@@ -8,14 +9,16 @@ x-logging: &default-logging
 
 services:
   tautulli:
-    image: linuxserver/tautulli:latest
+    image: lscr.io/linuxserver/tautulli:latest
+    pull_policy: always
     container_name: tautulli-app
-    restart: unless-stopped
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
     logging: *default-logging
     networks:
       - tautulli
     ports:
-      - "8181:8181"
+      - "172.17.0.1:8181:8181"
     environment:
       TZ: ${TZ:-America/New_York}
       PUID: ${SERVICE_USER:-1000}
@@ -31,4 +34,5 @@ services:
 
 networks:
   tautulli:
+    name: tautulli
     external: false
