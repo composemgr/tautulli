@@ -17,12 +17,16 @@ services:
     logging: *default-logging
     networks:
       - tautulli
+      - proxy
+      - cloudflare
     ports:
       - "172.17.0.1:8181:8181"
     environment:
       TZ: ${TZ:-America/New_York}
       PUID: ${SERVICE_USER:-1000}
       PGID: ${SERVICE_GROUP:-1000}
+      CONTAINER_NAME: tautulli-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
     volumes:
       - ./volumes/config/tautulli:/config
       - ./volumes/data/tautulli:/data
@@ -31,8 +35,28 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://tautulli-app:8181'
+      - 'cloudflare.hostname=tautulli.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.tautulli-app.entrypoints=http'
+      - 'traefik.http.routers.tautulli-app-secure.tls=true'
+      - 'traefik.http.routers.tautulli-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.tautulli-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.tautulli-app.middlewares=tautulli-app-https-redirect'
+      - 'traefik.http.routers.tautulli-app-secure.entrypoints=https'
+      - 'traefik.http.routers.tautulli-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.tautulli-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.tautulli-app-secure.service=tautulli-app'
+      - 'traefik.http.services.tautulli-app.loadbalancer.server.port=8181'
 
 networks:
   tautulli:
     name: tautulli
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
