@@ -1,0 +1,51 @@
+name: tautulli
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli-app
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      PUID: ${SERVICE_USER:-1000}
+      PGID: ${SERVICE_GROUP:-1000}
+      CONTAINER_NAME: tautulli-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+    volumes:
+      - './volumes/config/tautulli:/config'
+      - './volumes/data/tautulli:/data'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8181']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik'
+      - 'traefik.http.routers.tautulli-app.entrypoints=http'
+      - 'traefik.http.routers.tautulli-app.rule=Host(`${BASE_HOST_NAME:-$HOSTNAME}`)'
+      - 'traefik.http.routers.tautulli-app.middlewares=tautulli-app-https-redirect'
+      - 'traefik.http.middlewares.tautulli-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.tautulli-app-secure.entrypoints=https'
+      - 'traefik.http.routers.tautulli-app-secure.rule=Host(`${BASE_HOST_NAME:-$HOSTNAME}`)'
+      - 'traefik.http.routers.tautulli-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.tautulli-app-secure.service=tautulli-app'
+      - 'traefik.http.services.tautulli-app.loadbalancer.server.port=8181'
+    networks:
+      - tautulli
+      - traefik
+
+networks:
+  tautulli:
+    name: tautulli
+    external: false
+  traefik:
+    external: true
